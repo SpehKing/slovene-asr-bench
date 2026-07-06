@@ -33,7 +33,7 @@ nemotron:
   nemo_filename: nemotron-3.5-asr-streaming-0.6b.nemo
   max_epochs: 30
   limit_train_batches: -1  # -1 = full epochs
-  batch_duration: 360      # seconds of audio per batch (lhotse dynamic batching)
+  batch_duration: 300      # seconds of audio per batch (lhotse dynamic batching)
   lr: 0.05                 # Noam multiplier (NoamAnnealing), not an absolute LR
   weight_decay: 0.001
   warmup_steps: 500

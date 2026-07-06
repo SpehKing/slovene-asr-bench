@@ -46,7 +46,7 @@ image = (
     # NeMo's RNNT loss is numba-CUDA-compiled and needs libNVVM, which torch
     # wheels don't bundle. numba-cuda[cu12] pulls the NVIDIA wheels and locates
     # NVVM in them itself (pathfinder) — no CUDA_HOME/env guesswork.
-    .pip_install("numba-cuda[cu12]")
+    .pip_install("numba-cuda[cu12]", "jiwer==3.1.0")
     .run_commands(
         "ls -la /usr/local/lib/python3.12/site-packages/nvidia/cuda_nvcc/nvvm/lib64/ || true",
         "python -c \"from numba.cuda.cudadrv import nvvm; nvvm.NVVM(); print('NVVM OK')\"",
@@ -59,7 +59,14 @@ image = (
         " && git checkout FETCH_HEAD"
         " && rm -rf /opt/NeMo/.git"
     )
-    .env({"HF_HOME": "/cache", "HYDRA_FULL_ERROR": "1", "TOKENIZERS_PARALLELISM": "false"})
+    .env(
+        {
+            "HF_HOME": "/cache",
+            "HYDRA_FULL_ERROR": "1",
+            "TOKENIZERS_PARALLELISM": "false",
+            "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+        }
+    )
     .add_local_python_source("slovene_asr_bench")
 )
 
@@ -106,7 +113,7 @@ def _find_ft_ckpt() -> str:
 
 
 @app.function(
-    image=image, gpu="L40S", timeout=8 * 3600, volumes=VOLUMES, secrets=SECRETS, cpu=8, memory=49152
+    image=image, gpu="H100", timeout=8 * 3600, volumes=VOLUMES, secrets=SECRETS, cpu=8, memory=49152
 )
 def train_remote(cfg: dict) -> dict:
     import shutil

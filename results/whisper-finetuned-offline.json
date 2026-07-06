@@ -1,0 +1,25 @@
+{
+  "system": "whisper-finetuned-offline",
+  "model": "openai/whisper-large-v3-turbo",
+  "checkpoint": "finetuned",
+  "mode": "offline",
+  "split": "test",
+  "wer_raw": 0.1858,
+  "cer_raw": 0.0416,
+  "wer_norm": 0.0915,
+  "cer_norm": 0.024,
+  "n_scored": 379,
+  "hyp_digit_tokens": 3,
+  "rtfx": 286.71,
+  "audio_seconds": 6489.2,
+  "wall_seconds": 22.6,
+  "decode_args": {
+    "language": "sl",
+    "num_beams": 1,
+    "batch_size": 16,
+    "dtype": "bf16"
+  },
+  "n_utts": 379,
+  "audio_hours": 1.803,
+  "timestamp": "2026-07-06T20:20:21Z"
+}
