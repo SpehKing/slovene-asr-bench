@@ -25,6 +25,8 @@ image = (
         "accelerate==1.7.0",
         "jiwer==3.1.0",
         "soundfile==0.13.1",
+        "librosa==0.11.0",
+        "numba==0.61.2",
         "numpy==2.2.4",
     )
     .env({"HF_HOME": "/cache"})
@@ -59,7 +61,7 @@ def _load_processor_model(model_path: str, for_training: bool):
     return processor, model
 
 
-def _prepare(ds, processor, num_proc: int = 8):
+def _prepare(ds, processor):
     def fn(batch):
         audio = batch["audio"]
         batch["input_features"] = processor.feature_extractor(
@@ -68,7 +70,8 @@ def _prepare(ds, processor, num_proc: int = 8):
         batch["labels"] = processor.tokenizer(batch["text"]).input_ids
         return batch
 
-    return ds.map(fn, remove_columns=ds.column_names, num_proc=min(num_proc, max(1, len(ds) // 8)))
+    # in-process map: num_proc forks after torch is imported and deadlocks
+    return ds.map(fn, remove_columns=ds.column_names, num_proc=None)
 
 
 class _Collator:

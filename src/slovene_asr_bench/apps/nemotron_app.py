@@ -43,6 +43,14 @@ image = (
         "numba>=0.61",
         "numpy<2.3",
     )
+    # NeMo's RNNT loss is numba-CUDA-compiled and needs libNVVM, which torch
+    # wheels don't bundle. numba-cuda[cu12] pulls the NVIDIA wheels and locates
+    # NVVM in them itself (pathfinder) — no CUDA_HOME/env guesswork.
+    .pip_install("numba-cuda[cu12]")
+    .run_commands(
+        "ls -la /usr/local/lib/python3.12/site-packages/nvidia/cuda_nvcc/nvvm/lib64/ || true",
+        "python -c \"from numba.cuda.cudadrv import nvvm; nvvm.NVVM(); print('NVVM OK')\"",
+    )
     .run_commands(
         "git init /opt/NeMo"
         " && cd /opt/NeMo"
@@ -101,8 +109,14 @@ def _find_ft_ckpt() -> str:
     image=image, gpu="L40S", timeout=8 * 3600, volumes=VOLUMES, secrets=SECRETS, cpu=8, memory=49152
 )
 def train_remote(cfg: dict) -> dict:
+    import shutil
+
     ncfg = cfg["nemotron"]
     base = _base_ckpt(cfg)
+
+    # fresh run: stale version_N dirs (e.g. from smoke) would win the
+    # newest-.nemo pick in _find_ft_ckpt
+    shutil.rmtree(EXP_DIR, ignore_errors=True)
 
     cmd = [
         "python",
