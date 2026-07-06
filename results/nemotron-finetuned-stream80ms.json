@@ -1,0 +1,30 @@
+{
+  "system": "nemotron-finetuned-stream80ms",
+  "model": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+  "checkpoint": "finetuned",
+  "mode": "streaming",
+  "split": "test",
+  "wer_raw": 0.2873,
+  "cer_raw": 0.0703,
+  "wer_norm": 0.1827,
+  "cer_norm": 0.049,
+  "n_scored": 379,
+  "hyp_digit_tokens": 0,
+  "rtfx": 29.82,
+  "audio_seconds": 6489.2,
+  "wall_seconds": 217.6,
+  "decode_args": {
+    "att_context_size": [
+      56,
+      0
+    ],
+    "chunk_ms": 80,
+    "target_lang": "sl-SI",
+    "batch_size": 32,
+    "decoder_type": "rnnt",
+    "rtfx_note": "wall time includes one-off model load in the eval subprocess"
+  },
+  "n_utts": 379,
+  "audio_hours": 1.803,
+  "timestamp": "2026-07-06T23:44:40Z"
+}

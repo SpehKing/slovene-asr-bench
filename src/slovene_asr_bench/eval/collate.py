@@ -49,7 +49,9 @@ def main(repo_root: Path | None = None) -> None:
     rows = []
     for p in sorted(results_dir.glob("*.json")):
         with open(p) as f:
-            rows.append(json.load(f))
+            row = json.load(f)
+        if "system" in row and "model" in row:  # skip e.g. data_report.json
+            rows.append(row)
     if not rows:
         raise SystemExit(f"no result JSONs found in {results_dir}")
 

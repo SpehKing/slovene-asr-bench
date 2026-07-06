@@ -21,19 +21,30 @@ WER/CER computed identically for every row (`src/slovene_asr_bench/eval/metrics.
 "norm" = lowercased, punctuation stripped, diacritics preserved.
 
 <!-- RESULTS:START -->
-_Pending — run the pipeline below to populate._
+| System | Mode | WER (norm) | CER (norm) | WER (raw) | CER (raw) | RTFx |
+|---|---|---|---|---|---|---|
+| whisper-large-v3-turbo (baseline) | offline | **15.2%** | 6.5% | 24.0% | 8.4% | 384.35 |
+| whisper-large-v3-turbo (finetuned) | offline | **9.2%** | 2.4% | 18.6% | 4.2% | 286.71 |
+| nemotron-3.5-asr-streaming-0.6b (baseline) | streaming @ 80 ms | **60.2%** | 26.5% | 67.3% | 29.0% | 33.72 |
+| nemotron-3.5-asr-streaming-0.6b (baseline) | streaming @ 1120 ms | **54.4%** | 23.1% | 62.0% | 25.6% | 63.03 |
+| nemotron-3.5-asr-streaming-0.6b (finetuned) | streaming @ 80 ms | **18.3%** | 4.9% | 28.7% | 7.0% | 29.82 |
+| nemotron-3.5-asr-streaming-0.6b (finetuned) | streaming @ 1120 ms | **15.7%** | 4.2% | 25.9% | 6.2% | 94.38 |
 <!-- RESULTS:END -->
 
 What to look at:
 
 - **Baseline → fine-tuned delta.** Slovenian is an *adaptation-ready* language
   for Nemotron: the tokenizer covers it but the acoustic model has seen little
-  of it. ~10 h of ARTUR takes it from unusable to competitive.
-- **The price of latency.** The same fine-tuned Nemotron checkpoint evaluated
-  at an 80 ms decision window vs. 1120 ms quantifies the streaming
-  accuracy/latency trade-off — the number that matters for voice agents.
-- **Streaming RNNT vs. offline encoder-decoder** under identical training data
-  and identical scoring.
+  of it. 10.75 h of ARTUR takes it from unusable (60.2% WER) to 18.3% at an
+  80 ms decision window — and to within half a point of *offline* Whisper's
+  baseline (15.7% vs 15.2%) at 1120 ms, from a model 25% smaller.
+- **The price of latency, quantified.** The same fine-tuned checkpoint loses
+  2.6 WER points going from a 1120 ms to an 80 ms chunk (15.7% → 18.3%) — the
+  trade-off that matters for voice agents, measured on the same audio with the
+  same scoring.
+- **Fine-tuning also fixes conventions, not just acoustics.** Whisper's
+  digit-vs-spelled-numerals mismatch with ARTUR (52 digit tokens in baseline
+  hypotheses → 3 after FT) accounts for part of its 15.2% → 9.2% gain.
 
 ## How it works
 
@@ -49,7 +60,7 @@ three shared volumes:
                               volume: slasr-artur-data
                        ┌───────────────┴──────────────┐
         ┌──────────────▼─────────────┐  ┌─────────────▼───────────────┐
-        │ slasr-whisper (L40S)       │  │ slasr-nemotron (L40S)       │
+        │ slasr-whisper (L40S)       │  │ slasr-nemotron (H100/L40S)  │
         │ full FT + offline eval     │  │ NeMo full FT + cache-aware  │
         │ (transformers/Seq2Seq)     │  │ streaming eval              │
         └──────────────┬─────────────┘  └─────────────┬───────────────┘
@@ -86,8 +97,10 @@ Or stage by stage — see `scripts/run_all.sh`. Every stage is idempotent and
 checkpointed on the volume; `configs/tiny.yaml` (~10 h train) scales to 100 h+
 by listing more ARTUR tars and raising `data.hours`.
 
-Approximate cost on Modal (tiny run): **≈ $16–23** total — data prep ~$0.7 on
-CPU, each fine-tune $4–10 on an L40S, all six evals ~$5. Volume storage
+Measured cost on Modal for the runs behind the table above: **≈ $25** total —
+data prep ~$1 (CPU), Whisper full FT ~$0.50 (15 min on an L40S!), Nemotron
+full FT ~$12 (3 h on an H100; the RNNT joint OOMs an L40S on long batches),
+all six evals ~$4, plus ~$3 of smoke tests and dead ends. Volume storage
 (~30 GiB) is inside Modal's free tier.
 
 ## Limitations
