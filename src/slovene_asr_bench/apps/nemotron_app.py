@@ -36,7 +36,13 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("git", "ffmpeg", "libsndfile1", "sox", "build-essential")
     .uv_pip_install("Cython", "packaging", "huggingface_hub")
-    .uv_pip_install(f"nemo_toolkit[asr] @ git+https://github.com/NVIDIA/NeMo.git@{NEMO_SHA}")
+    # pip (not uv) for the NeMo layer: uv backtracks numba to py<3.10-only
+    # versions; the explicit numba/numpy anchors keep the librosa chain modern.
+    .pip_install(
+        f"nemo_toolkit[asr] @ git+https://github.com/NVIDIA/NeMo.git@{NEMO_SHA}",
+        "numba>=0.61",
+        "numpy<2.3",
+    )
     .run_commands(
         "git init /opt/NeMo"
         " && cd /opt/NeMo"

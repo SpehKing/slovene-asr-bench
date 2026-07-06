@@ -70,3 +70,50 @@ def open_stream(url: str):
     """Open a streaming file-like object for a download URL."""
     req = urllib.request.Request(url, headers=_UA)
     return urllib.request.urlopen(req, timeout=120)
+
+
+def download_file(url: str, dest, max_retries: int = 6, chunk: int = 1 << 20):
+    """Download to a file with Range-based resume. CLARIN streams can reset
+    mid-transfer on multi-GB files; extracting straight off the socket is not
+    retryable, a .part file with resume is."""
+    from pathlib import Path
+
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        return dest
+    part = dest.with_suffix(dest.suffix + ".part")
+
+    last_err: Exception | None = None
+    for attempt in range(1, max_retries + 1):
+        have = part.stat().st_size if part.exists() else 0
+        headers = dict(_UA)
+        if have:
+            headers["Range"] = f"bytes={have}-"
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                if have and resp.status != 206:
+                    # server ignored Range -> start over
+                    have = 0
+                remaining = resp.headers.get("Content-Length")
+                total = have + int(remaining) if remaining else None
+                written = have
+                next_log = written + (512 << 20)
+                with open(part, "ab" if have else "wb") as f:
+                    while data := resp.read(chunk):
+                        f.write(data)
+                        written += len(data)
+                        if written >= next_log:
+                            print(f"[download] {dest.name}: {written / (1 << 30):.1f} GiB")
+                            next_log += 512 << 20
+            size = part.stat().st_size
+            if total is not None and size < total:
+                raise OSError(f"short read: {size}/{total} bytes")
+            part.rename(dest)
+            print(f"[download] {dest.name}: done ({size / (1 << 20):.0f} MiB)")
+            return dest
+        except Exception as exc:
+            last_err = exc
+            print(f"[download] {dest.name}: attempt {attempt}/{max_retries} failed: {exc}; resuming")
+    raise RuntimeError(f"download failed after {max_retries} attempts: {url}") from last_err

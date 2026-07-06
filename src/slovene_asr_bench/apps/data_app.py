@@ -67,15 +67,18 @@ def download_and_extract(cfg: dict) -> dict:
 
     report: dict = {"tars": {}}
 
+    tmp = Path("/tmp/artur")  # container-local scratch: tars never touch the volume
+
     # 1) transcriptions (49 MB) — everything else keys off these
     if not _marker("trs").exists():
         url = urls.resolve_url(urls.TRS_ARCHIVE)
         print(f"[download] {urls.TRS_ARCHIVE} <- {url}")
+        archive = urls.download_file(url, tmp / urls.TRS_ARCHIVE)
         dest = DATA / "raw/trs"
         dest.mkdir(parents=True, exist_ok=True)
-        with urls.open_stream(url) as resp:
-            with tarfile.open(fileobj=resp, mode="r|gz") as tf:
-                tf.extractall(dest, filter="data")
+        with tarfile.open(archive, "r:gz") as tf:
+            tf.extractall(dest, filter="data")
+        archive.unlink()
         _marker("trs").touch()
         data_vol.commit()
 
@@ -94,24 +97,25 @@ def download_and_extract(cfg: dict) -> dict:
         print(f"[download] {tar_name} <- {url}")
         kept = skipped = 0
         t0 = time.time()
-        with urls.open_stream(url) as resp:
-            with tarfile.open(fileobj=resp, mode="r|") as tf:
-                for member in tf:
-                    base = os.path.basename(member.name)
-                    if not base.endswith("-avd.wav"):
-                        continue
-                    rec_id = base[: -len("-avd.wav")]
-                    if rec_id not in transcribed:
-                        skipped += 1
-                        continue
-                    src = tf.extractfile(member)
-                    if src is None:
-                        continue
-                    out = wav_dir / f"{rec_id}.wav"
-                    with open(out, "wb") as dst:
-                        while chunk := src.read(1 << 20):
-                            dst.write(chunk)
-                    kept += 1
+        tar_path = urls.download_file(url, tmp / tar_name)
+        with tarfile.open(tar_path, "r") as tf:
+            for member in tf:
+                base = os.path.basename(member.name)
+                if not base.endswith("-avd.wav"):
+                    continue
+                rec_id = base[: -len("-avd.wav")]
+                if rec_id not in transcribed:
+                    skipped += 1
+                    continue
+                src = tf.extractfile(member)
+                if src is None:
+                    continue
+                out = wav_dir / f"{rec_id}.wav"
+                with open(out, "wb") as dst:
+                    while chunk := src.read(1 << 20):
+                        dst.write(chunk)
+                kept += 1
+        tar_path.unlink()
         report["tars"][tar_name] = {"kept": kept, "skipped_untranscribed": skipped, "secs": round(time.time() - t0)}
         print(f"[extract] {tar_name}: kept {kept} wavs, skipped {skipped} untranscribed ({report['tars'][tar_name]['secs']}s)")
         _marker(tar_name).touch()
