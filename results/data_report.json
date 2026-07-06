@@ -1,0 +1,77 @@
+{
+  "status": "ok",
+  "recordings_used": 371,
+  "utterances": 11598,
+  "pool_hours": 48.89,
+  "segmentation": {
+    "turns_total": 9261,
+    "turns_no_speaker": 3564,
+    "turns_overlap": 84,
+    "spans_too_long": 0,
+    "utts_too_short": 150
+  },
+  "suspect_tokens_top": [
+    [
+      "[ime",
+      42
+    ],
+    [
+      "priimek]",
+      40
+    ],
+    [
+      "AC/DC",
+      3
+    ],
+    [
+      "v@",
+      2
+    ],
+    [
+      "AC/DC.",
+      2
+    ],
+    [
+      "priimek].",
+      1
+    ],
+    [
+      "priimek],",
+      1
+    ]
+  ],
+  "splits": {
+    "hours": {
+      "test": 2.413,
+      "dev": 1.147,
+      "train": 10.745
+    },
+    "targets": {
+      "test": 2.0,
+      "dev": 1.0,
+      "train": 10.0
+    },
+    "n_utts": {
+      "test": 490,
+      "dev": 269,
+      "train": 2502
+    },
+    "n_speakers": {
+      "test": 10,
+      "dev": 4,
+      "train": 40
+    },
+    "n_components": {
+      "test": 3,
+      "dev": 1,
+      "train": 3
+    },
+    "unassigned_hours": 34.582,
+    "test_subcorpora": [
+      "J",
+      "N"
+    ],
+    "test_utts_dropped_for_purity": 111,
+    "test_hours_effective": 1.803
+  }
+}
