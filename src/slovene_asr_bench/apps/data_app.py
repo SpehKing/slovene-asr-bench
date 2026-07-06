@@ -275,6 +275,9 @@ def build_dataset(cfg: dict) -> dict:
         "splits": split_stats,
         "splits_ids": splits,
     }
+    from slovene_asr_bench.config import to_plain_json
+
+    report = to_plain_json(report)
     (DATA / "report.json").write_text(
         json.dumps({k: v for k, v in report.items() if k != "splits_ids"}, indent=2, ensure_ascii=False)
     )

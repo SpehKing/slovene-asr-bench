@@ -68,7 +68,7 @@ def _prepare(ds, processor, num_proc: int = 8):
         batch["labels"] = processor.tokenizer(batch["text"]).input_ids
         return batch
 
-    return ds.map(fn, remove_columns=ds.column_names, num_proc=num_proc)
+    return ds.map(fn, remove_columns=ds.column_names, num_proc=min(num_proc, max(1, len(ds) // 8)))
 
 
 class _Collator:
@@ -176,6 +176,9 @@ def train_remote(cfg: dict) -> dict:
         "train_seconds": round(train_secs),
         "config": wcfg,
     }
+    from slovene_asr_bench.config import to_plain_json
+
+    summary = to_plain_json(summary)
     Path(FT_DIR, "train_summary.json").write_text(json.dumps(summary, indent=2))
     out_vol.commit()
     return summary
@@ -223,6 +226,8 @@ def eval_remote(cfg: dict, checkpoint: str) -> dict:
         refs.extend(rows["text"])
         audio_seconds += sum(rows["duration"])
 
+    from slovene_asr_bench.config import to_plain_json
+
     metrics = compute_asr_metrics(refs, hyps, audio_seconds=audio_seconds, wall_seconds=wall)
     payload = {
         "system": f"whisper-{checkpoint}-offline",
@@ -236,6 +241,7 @@ def eval_remote(cfg: dict, checkpoint: str) -> dict:
         "audio_hours": round(audio_seconds / 3600, 3),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+    payload = to_plain_json(payload)
     out_dir = Path("/outputs/results")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"{payload['system']}.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False))

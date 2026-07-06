@@ -205,6 +205,9 @@ def eval_remote(cfg: dict, checkpoint: str, contexts: str) -> list[dict]:
             "audio_hours": round(audio_seconds / 3600, 3),
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
+        from slovene_asr_bench.config import to_plain_json
+
+        payload = to_plain_json(payload)
         out_dir = Path("/outputs/results")
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / f"{payload['system']}.json").write_text(

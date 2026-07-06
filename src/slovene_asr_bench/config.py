@@ -25,3 +25,13 @@ def required_pool_hours(cfg: dict) -> float:
     """Hours of usable utterances needed before splitting (targets + 20% slack)."""
     h = cfg["data"]["hours"]
     return 1.2 * (h["train"] + h["dev"] + h["test"])
+
+
+def to_plain_json(obj):
+    """Round-trip through JSON so Modal return values contain only built-in
+    types — the local venv has no numpy to unpickle np.float64 and friends."""
+    import json
+
+    return json.loads(
+        json.dumps(obj, default=lambda o: o.item() if hasattr(o, "item") else str(o))
+    )
