@@ -1,0 +1,22 @@
+# local data / artifacts (live on Modal volumes, never in git)
+data/
+outputs/
+*.nemo
+*.wav
+*.tar
+*.tgz
+
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# training junk
+lightning_logs/
+wandb/
+nemo_experiments/
+
+# os / editor
+.DS_Store

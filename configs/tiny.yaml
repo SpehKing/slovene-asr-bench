@@ -1,0 +1,40 @@
+# "Tiny" run: ~10h train / 1h dev / 2h test from spontaneous-speech subcorpora.
+# Scale up later by listing more tars and raising hours — nothing else changes.
+name: tiny
+seed: 17
+
+data:
+  tars:
+    - Artur-J-Audio_00.tar   # public speech (interviews, round tables)
+    - Artur-N-Audio_00.tar   # private speech (commands, monologues, dialogues)
+  # pulled automatically, in order, if transcribed pool < required hours
+  extend_tars:
+    - Artur-N-Audio_01.tar
+    - Artur-N-Audio_02.tar
+  hours:
+    train: 10.0
+    dev: 1.0
+    test: 2.0
+  min_utt_sec: 0.5
+  max_utt_sec: 25.0
+
+whisper:
+  model_id: openai/whisper-large-v3-turbo
+  learning_rate: 1.0e-5
+  batch_size: 16
+  grad_accum: 2
+  warmup_steps: 50
+  epochs: 3
+  max_steps: -1            # -1 = use epochs
+  eval_batch_size: 16
+
+nemotron:
+  model_id: nvidia/nemotron-3.5-asr-streaming-0.6b
+  nemo_filename: nemotron-3.5-asr-streaming-0.6b.nemo
+  max_epochs: 30
+  limit_train_batches: -1  # -1 = full epochs
+  batch_duration: 360      # seconds of audio per batch (lhotse dynamic batching)
+  lr: 0.05                 # Noam multiplier (NoamAnnealing), not an absolute LR
+  weight_decay: 0.001
+  warmup_steps: 500
+  target_lang: sl-SI

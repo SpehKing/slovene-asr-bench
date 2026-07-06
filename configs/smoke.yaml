@@ -1,0 +1,36 @@
+# Smoke run: prove the whole pipeline end-to-end for well under $1.5.
+# ~20 min of audio, a handful of training steps per model.
+name: smoke
+seed: 17
+
+data:
+  tars:
+    - Artur-N-Audio_00.tar
+  extend_tars: []
+  hours:
+    train: 0.30
+    dev: 0.05
+    test: 0.10
+  min_utt_sec: 0.5
+  max_utt_sec: 25.0
+
+whisper:
+  model_id: openai/whisper-large-v3-turbo
+  learning_rate: 1.0e-5
+  batch_size: 8
+  grad_accum: 1
+  warmup_steps: 5
+  epochs: 1
+  max_steps: 20
+  eval_batch_size: 8
+
+nemotron:
+  model_id: nvidia/nemotron-3.5-asr-streaming-0.6b
+  nemo_filename: nemotron-3.5-asr-streaming-0.6b.nemo
+  max_epochs: 1
+  limit_train_batches: 25
+  batch_duration: 200
+  lr: 0.05
+  weight_decay: 0.001
+  warmup_steps: 10
+  target_lang: sl-SI

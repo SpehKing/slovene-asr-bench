@@ -1,0 +1,25 @@
+[project]
+name = "slovene-asr-bench"
+version = "0.1.0"
+description = "Fine-tuning and benchmarking streaming + offline ASR models on Slovenian (ARTUR corpus) with Modal serverless GPUs"
+readme = "README.md"
+authors = [
+    { name = "Gašper Azinovič", email = "gasper.azinovic@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "modal>=1.5.1",
+    "pyyaml>=6.0.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
